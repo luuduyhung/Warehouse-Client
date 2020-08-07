@@ -7,7 +7,7 @@
       </a-form-model-item>
       <a-form-model-item label="Category">
         <a-select v-model="form.categoryId" placeholder="Select category">
-          <a-select-option v-for="cat in categories" :key="cat.id">{{cat.name}}</a-select-option>
+          <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{cat.name}}</a-select-option>
         </a-select>
       </a-form-model-item>
       <p>Attributes</p>
@@ -58,24 +58,34 @@
           <a-col :span="8">
             <p>
               Sku
-              <a style="margin-left: 10px">Generate SKU</a>
+              <a style="margin-left: 10px" @click="openSkuModal">Generate SKU</a>
             </p>
-            <GenerateSkuModal :sample="items" :productName="form.name" />
+            <GenerateSkuModal
+              :handleCancel="closeSkuModal"
+              :visible="generateSkuModalVisible"
+              :sample="items[0]"
+              :productName="form.name"
+              :attributes="form.attributeForm.attributes"
+              :handleGenerate="handleGenerate"
+            />
           </a-col>
           <a-col :span="6">
-            <p>Price</p>
+            <p>
+              Price
+              <a @click="copyPrice">Copy to all</a>
+            </p>
           </a-col>
         </a-row>
         <a-form-model-item v-for="(item,index) in items" :key="index">
           <a-row>
             <a-col :span="8">
-              <a-input v-model="item.name" :default-value="itemName(item)" />
+              <a-input v-model="item.name" placeholder="Item name" :defaultValue="item.name" />
             </a-col>
             <a-col :span="8">
               <a-input v-model="item.sku" placeholder="Sku" />
             </a-col>
-            <a-col :span="6">
-              <a-input v-model="item.price" placeholder="Price" />
+            <a-col :span="8">
+              <a-input-number v-model="item.price" placeholder="Price" />
             </a-col>
           </a-row>
         </a-form-model-item>
@@ -92,12 +102,12 @@
 
 <script>
 import axios from "axios";
+import generateSku from "../utils/generateSku";
 import AttributeCreateModal from "../components/Attribute/Create";
 import GenerateSkuModal from "../components/Product/GenerateSku";
 
 const initForm = {
   name: "",
-  price: null,
   categoryId: null,
   attributeForm: {
     attributes: [
@@ -123,16 +133,10 @@ export default {
     return {
       categories: [],
       attributes: [],
-      form: { ...initForm },
       items: [],
-      showProductItem: false,
-      attributeCreateVisible: false
-      // generateSkuRule: [
-      //   {
-      //     value,
-      //     show
-      //   }
-      // ]
+      form: { ...initForm },
+      attributeCreateVisible: false,
+      generateSkuModalVisible: false
     };
   },
   watch: {
@@ -154,12 +158,14 @@ export default {
           0,
           attributeValues.map(a => a.value)
         );
-        const name = this.form.name.substring(0, 3);
+        // const name = this.form.name.substring(0, 3);
         this.items = generateItems.map(item => {
-          let attSku = name;
-          item.forEach(i => (attSku += `-${i.substring(0, 3)}`));
+          // let attSku = name;
+          // item.forEach(i => (attSku += `-${i.substring(0, 3)}`));
           return {
-            sku: attSku.toUpperCase(),
+            sku: "",
+            name: this.itemName(item),
+            price: null,
             attributeValues: item
           };
         });
@@ -176,10 +182,16 @@ export default {
     this.attributes = attributes;
   },
   methods: {
+    openSkuModal() {
+      this.generateSkuModalVisible = true;
+    },
+    closeSkuModal() {
+      this.generateSkuModalVisible = false;
+    },
     itemName(item) {
       let itemName = this.form.name + "-";
-      const length = item.attributeValues.length;
-      item.attributeValues.forEach((val, i) => {
+      const length = item.length;
+      item.forEach((val, i) => {
         itemName += val;
         if (i < length - 1) {
           itemName += "/";
@@ -197,17 +209,38 @@ export default {
       this.attributeCreateVisible = false;
     },
     async submitForm() {
-      // const {
-      //   name,
-      //   categoryId,
-      //   attributeForm: { attributes }
-      // } = this.form;
+      const {
+        name,
+        categoryId,
+        attributeForm: { attributes }
+      } = this.form;
+      const items = this.items;
+      try {
+        await axios.post("http://localhost:5000/product", {
+          name,
+          categoryId,
+          attributes,
+          items
+        });
+      } catch (e) {
+        console.error(e);
+      }
     },
     addAttribute() {
       this.form.attributeForm.attributes.push({ name: null, value: [] });
     },
     removeAttribute(index) {
       this.form.attributeForm.attributes.splice(index, 1);
+    },
+    handleGenerate(rules) {
+      const productName = this.form.name;
+      this.items.forEach(item => {
+        item.sku = generateSku(rules, productName, item.attributeValues);
+      });
+      this.generateSkuModalVisible = false;
+    },
+    copyPrice() {
+      this.items.forEach(item => (item.price = this.items[0].price));
     }
   }
 };
