@@ -90,7 +90,6 @@ export default {
         products
       });
     }
-    console.log(this.stocks);
   }
 };
 </script>

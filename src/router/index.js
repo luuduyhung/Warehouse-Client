@@ -3,7 +3,7 @@ import VueRouter from "vue-router";
 import Product from "../views/Product.vue";
 import Item from "../views/Item.vue";
 import Stock from "../views/Stock.vue";
-import ProductCreate from "../views/ProductCreate.vue";
+import ProductCreateStep from "../views/ProductCreateStep.vue";
 import { FormModel } from "ant-design-vue";
 
 Vue.use(VueRouter);
@@ -32,8 +32,8 @@ const routes = [
   },
   {
     path: "/productCreate",
-    name: "ProductCreate",
-    component: ProductCreate,
+    name: "ProductCreateStep",
+    component: ProductCreateStep,
   },
 ];
 

@@ -1,7 +1,6 @@
 <template>
-  <a-card title="Create Product">
+  <a-card title="General">
     <a-form-model :model="form">
-      <h3>General</h3>
       <a-form-model-item label="Name">
         <a-input v-model="form.name" placeholder="Enter product name" />
       </a-form-model-item>
@@ -10,7 +9,7 @@
           <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{cat.name}}</a-select-option>
         </a-select>
       </a-form-model-item>
-      <p>Attributes</p>
+      <b>Attributes</b>
       <a-form-model-item v-for="(attribute,index) in form.attributeForm.attributes" :key="index">
         <a-row>
           <a-col :span="6">
@@ -50,7 +49,7 @@
       </a-form-model-item>
       <a-button type="primary" @click="addAttribute">Add attribute</a-button>
       <a-form-model-item>
-        <h3>Items</h3>
+        <b>Items</b>
         <a-row>
           <a-col :span="8">
             <p>Name</p>
@@ -72,7 +71,7 @@
           <a-col :span="6">
             <p>
               Price
-              <a @click="copyPrice">Copy to all</a>
+              <a @click="copyPrice" style="margin-left: 10px">Copy to all</a>
             </p>
           </a-col>
         </a-row>
@@ -85,13 +84,13 @@
               <a-input v-model="item.sku" placeholder="Sku" />
             </a-col>
             <a-col :span="8">
-              <a-input-number v-model="item.price" placeholder="Price" />
+              <a-input-number v-model="item.price" placeholder="Price" style="width: 150px" />
             </a-col>
           </a-row>
         </a-form-model-item>
       </a-form-model-item>
       <a-form-model-item>
-        <a-button type="primary" @click="submitForm">Save</a-button>
+        <a-button type="primary" @click="submitForm">Save & Next</a-button>
         <router-link to="/product">
           <a-button style="margin-left: 10px">Cancel</a-button>
         </router-link>
@@ -128,7 +127,9 @@ export default {
     AttributeCreateModal,
     GenerateSkuModal
   },
-  props: {},
+  props: {
+    handleNext: Function
+  },
   data() {
     return {
       categories: [],
@@ -222,6 +223,7 @@ export default {
           attributes,
           items
         });
+        this.handleNext(items);
       } catch (e) {
         console.error(e);
       }
